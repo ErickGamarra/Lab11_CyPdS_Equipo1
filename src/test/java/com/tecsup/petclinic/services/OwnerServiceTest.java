@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -41,4 +43,23 @@ public class OwnerServiceTest {
         assertEquals(EXPECTED_LAST_NAME, owner.getLastName(), "El apellido debe ser Franklin");
         assertEquals(EXPECTED_CITY, owner.getCity(), "La ciudad debe ser Madison");
     }
+
+    // Prueba 2: testFindByLastName — buscar por apellido
+    @Test
+    public void testFindByLastName() {
+        String LAST_NAME = "Davis";
+        int EXPECTED_SIZE = 2; // En data.sql existen 2 dueños con apellido Davis (id=2 e id=4)
+
+        List<Owner> owners = this.ownerService.findByLastName(LAST_NAME);
+
+        log.info("Dueños encontrados con apellido {}: {}", LAST_NAME, owners);
+
+        assertNotNull(owners, "La lista no debe ser nula");
+        assertEquals(EXPECTED_SIZE, owners.size(), "Debe encontrar exactamente 2 dueños con apellido Davis");
+
+        for (Owner owner : owners) {
+            assertEquals(LAST_NAME, owner.getLastName(), "El apellido de cada dueño retornado debe ser Davis");
+        }
+    }
+
 }
