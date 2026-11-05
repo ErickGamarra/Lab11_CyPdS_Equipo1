@@ -1,55 +1,62 @@
 package com.tecsup.petclinic.services;
 
-import com.tecsup.petclinic.dtos.OwnerDTO;
 import com.tecsup.petclinic.entities.Owner;
 import com.tecsup.petclinic.exceptions.OwnerNotFoundException;
-import com.tecsup.petclinic.mappers.OwnerMapper;
 import com.tecsup.petclinic.repositories.OwnerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
+// Implementación del servicio OwnerService con JPA y base de datos H2.
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class OwnerServiceImpl implements OwnerService {
 
-	private final OwnerRepository ownerRepository;
-	private final OwnerMapper ownerMapper;
+    private final OwnerRepository ownerRepository;
 
-	@Override
-	public OwnerDTO findById(Integer id) throws OwnerNotFoundException {
+    @Override
+    public Owner create(Owner owner) {
+        return ownerRepository.save(owner);
+    }
 
-		Optional<Owner> owner = ownerRepository.findById(id);
+    @Override
+    public Owner update(Owner owner) {
+        return ownerRepository.save(owner);
+    }
 
-		if (!owner.isPresent())
-			throw new OwnerNotFoundException("Record not found...!");
+    @Override
+    public void delete(Integer id) throws OwnerNotFoundException {
+        Owner owner = findById(id);
+        ownerRepository.delete(owner);
+    }
 
-		return this.ownerMapper.mapToDto(owner.get());
-	}
+    @Override
+    @Transactional(readOnly = true)
+    public Owner findById(Integer id) throws OwnerNotFoundException {
+        return ownerRepository.findById(id)
+                .orElseThrow(() -> new OwnerNotFoundException("Owner not found with ID: " + id));
+    }
 
-	@Override
-	public void delete(Integer id) throws OwnerNotFoundException {
+    @Override
+    @Transactional(readOnly = true)
+    public List<Owner> findByLastName(String lastName) {
+        return ownerRepository.findByLastName(lastName);
+    }
 
-		OwnerDTO owner = findById(id);
+    @Override
+    @Transactional(readOnly = true)
+    public List<Owner> findByCity(String city) {
+        return ownerRepository.findByCity(city);
+    }
 
-		ownerRepository.delete(this.ownerMapper.mapToEntity(owner));
-	}
-
-	@Override
-	public List<OwnerDTO> findByLastName(String lastName) {
-
-		List<Owner> owners = ownerRepository.findByLastName(lastName);
-
-		owners.forEach(owner -> log.info("{}", owner));
-
-		return owners
-				.stream()
-				.map(this.ownerMapper::mapToDto)
-				.collect(Collectors.toList());
-	}
+    @Override
+    @Transactional(readOnly = true)
+    public List<Owner> findAll() {
+        return ownerRepository.findAll();
+    }
 }

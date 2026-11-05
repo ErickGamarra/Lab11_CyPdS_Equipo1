@@ -5,12 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-
 @Repository
-public interface OwnerRepository
-	extends JpaRepository<Owner, Integer> {
+public interface OwnerRepository extends JpaRepository<Owner, Integer> {
 
-	// Fetch owners by last name
-	List<Owner> findByLastName(String lastName);
+    List<Owner> findByLastName(String lastName);
 
+    List<Owner> findByCity(String city);
+
+    List<Owner> findByFirstName(String firstName);
 }
