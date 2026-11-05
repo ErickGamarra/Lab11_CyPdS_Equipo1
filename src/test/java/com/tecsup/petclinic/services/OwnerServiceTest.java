@@ -62,4 +62,21 @@ public class OwnerServiceTest {
         }
     }
 
+    // Prueba 3: testFindByCity — buscar por ciudad
+    @Test
+    public void testFindByCity() {
+        String CITY = "Monona";
+        int EXPECTED_SIZE = 2; // En data.sql existen 2 dueños en Monona: Jean Coleman (id=6) y Jeff Black (id=7)
+
+        List<Owner> owners = this.ownerService.findByCity(CITY);
+
+        log.info("Dueños encontrados en la ciudad {}: {}", CITY, owners);
+
+        assertNotNull(owners, "La lista no debe ser nula");
+        assertEquals(EXPECTED_SIZE, owners.size(), "Debe encontrar exactamente 2 dueños en Monona");
+
+        for (Owner owner : owners) {
+            assertEquals(CITY, owner.getCity(), "La ciudad de cada dueño retornado debe ser Monona");
+        }
+    }
 }
