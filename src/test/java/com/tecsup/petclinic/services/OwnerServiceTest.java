@@ -1,5 +1,6 @@
 package com.tecsup.petclinic.services;
 
+import com.tecsup.petclinic.dtos.OwnerDTO;
 import com.tecsup.petclinic.entities.Owner;
 import com.tecsup.petclinic.exceptions.OwnerNotFoundException;
 import com.tecsup.petclinic.mappers.OwnerMapper;
@@ -13,10 +14,14 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -85,6 +90,29 @@ public class OwnerServiceTest {
 		verify(this.repository).findById(ID_NOT_EXIST);
 		// Nunca debe llegar a eliminar un registro inexistente.
 		verify(this.repository, never()).delete(any(Owner.class));
+		verifyNoMoreInteractions(this.repository);
+	}
+
+	/**
+	 * Buscar por un apellido sin coincidencias devuelve una lista vacía
+	 * (no null y no lanza excepción).
+	 */
+	@Test
+	public void testFindByLastName_Empty() {
+
+		String LAST_NAME_NOT_EXIST = "NoExiste";
+
+		// El repositorio no encuentra ningún dueño con ese apellido.
+		when(this.repository.findByLastName(LAST_NAME_NOT_EXIST))
+				.thenReturn(Collections.emptyList());
+
+		List<OwnerDTO> owners = this.ownerService.findByLastName(LAST_NAME_NOT_EXIST);
+
+		log.info("Dueños encontrados: {}", owners.size());
+
+		assertNotNull(owners);
+		assertTrue(owners.isEmpty());
+		verify(this.repository).findByLastName(LAST_NAME_NOT_EXIST);
 		verifyNoMoreInteractions(this.repository);
 	}
 
