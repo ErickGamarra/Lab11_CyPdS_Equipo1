@@ -1,5 +1,6 @@
 package com.tecsup.petclinic.services;
 
+import com.tecsup.petclinic.entities.Owner;
 import com.tecsup.petclinic.exceptions.OwnerNotFoundException;
 import com.tecsup.petclinic.mappers.OwnerMapper;
 import com.tecsup.petclinic.repositories.OwnerRepository;
@@ -16,6 +17,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -56,6 +59,32 @@ public class OwnerServiceTest {
 
 		assertEquals("Record not found...!", exception.getMessage());
 		verify(this.repository).findById(ID_NOT_EXIST);
+		verifyNoMoreInteractions(this.repository);
+	}
+
+	/**
+	 * Eliminar un dueño que no existe debe lanzar OwnerNotFoundException
+	 * y no debe borrar nada.
+	 */
+	@Test
+	public void testDeleteOwner_NotFound() {
+
+		int ID_NOT_EXIST = 999;
+
+		// El repositorio no encuentra ningún dueño con ese ID.
+		when(this.repository.findById(ID_NOT_EXIST))
+				.thenReturn(Optional.empty());
+
+		OwnerNotFoundException exception = assertThrows(
+				OwnerNotFoundException.class,
+				() -> this.ownerService.delete(ID_NOT_EXIST));
+
+		log.info("Excepción esperada: {}", exception.getMessage());
+
+		assertEquals("Record not found...!", exception.getMessage());
+		verify(this.repository).findById(ID_NOT_EXIST);
+		// Nunca debe llegar a eliminar un registro inexistente.
+		verify(this.repository, never()).delete(any(Owner.class));
 		verifyNoMoreInteractions(this.repository);
 	}
 
