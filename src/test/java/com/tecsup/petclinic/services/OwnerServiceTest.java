@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
@@ -142,5 +144,53 @@ public class OwnerServiceTest {
         for (Owner owner : owners) {
             assertEquals(CITY, owner.getCity(), "La ciudad de cada dueño retornado debe ser Monona");
         }
+    }
+
+    // Integrante C — Casos de error
+    // Prueba 1: testFindOwnerById_NotFound — un ID inexistente lanza OwnerNotFoundException
+    @Test
+    public void testFindOwnerById_NotFound() {
+        Integer ID_NOT_EXIST = 666; // No existe en data.sql
+
+        OwnerNotFoundException exception = assertThrows(
+                OwnerNotFoundException.class,
+                () -> this.ownerService.findById(ID_NOT_EXIST));
+
+        log.info("Excepción esperada: {}", exception.getMessage());
+
+        assertEquals("Owner not found with ID: " + ID_NOT_EXIST, exception.getMessage());
+        verify(repository).findById(ID_NOT_EXIST); // Sí consultó la BD
+    }
+
+    // Prueba 2: testDeleteOwner_NotFound — borrar un ID inexistente lanza excepción y no borra nada
+    @Test
+    @Transactional
+    public void testDeleteOwner_NotFound() {
+        Integer ID_NOT_EXIST = 1000; // No existe en data.sql
+        long totalAntes = repository.count();
+
+        OwnerNotFoundException exception = assertThrows(
+                OwnerNotFoundException.class,
+                () -> this.ownerService.delete(ID_NOT_EXIST));
+
+        log.info("Excepción esperada: {}", exception.getMessage());
+
+        assertEquals("Owner not found with ID: " + ID_NOT_EXIST, exception.getMessage());
+        verify(repository, never()).delete(any(Owner.class)); // Nunca llegó a eliminar
+        assertEquals(totalAntes, repository.count(), "La cantidad de dueños no debe cambiar");
+    }
+
+    // Prueba 3: testFindByLastName_Empty — un apellido sin coincidencias devuelve lista vacía
+    @Test
+    public void testFindByLastName_Empty() {
+        String LAST_NAME_NOT_EXIST = "NoExiste"; // Ningún dueño tiene ese apellido en data.sql
+
+        List<Owner> owners = this.ownerService.findByLastName(LAST_NAME_NOT_EXIST);
+
+        log.info("Dueños encontrados con apellido {}: {}", LAST_NAME_NOT_EXIST, owners.size());
+
+        assertNotNull(owners, "La lista no debe ser nula");
+        assertTrue(owners.isEmpty(), "La lista debe estar vacía");
+        verify(repository).findByLastName(LAST_NAME_NOT_EXIST);
     }
 }
