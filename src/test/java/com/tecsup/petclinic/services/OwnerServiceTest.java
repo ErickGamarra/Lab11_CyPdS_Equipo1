@@ -2,14 +2,19 @@ package com.tecsup.petclinic.services;
 
 import com.tecsup.petclinic.entities.Owner;
 import com.tecsup.petclinic.exceptions.OwnerNotFoundException;
+import com.tecsup.petclinic.repositories.OwnerRepository;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Slf4j
@@ -17,6 +22,65 @@ public class OwnerServiceTest {
 
     @Autowired
     private OwnerService ownerService;
+
+    @MockitoSpyBean
+    private OwnerRepository repository; // Mockito observa las llamadas al repositorio real de H2.
+
+    @Autowired
+    private EntityManager entityManager;
+
+    // Integrante A — cada prueba crea su propio dueño y revierte sus cambios al terminar.
+    @Test
+    @Transactional
+    public void testCreateOwner() throws OwnerNotFoundException {
+        Owner nuevo = new Owner("Ana", "Rojas", "Calle Uno 10", "Lima", "987654321");
+        Owner creado = ownerService.create(nuevo);
+
+        verify(repository).save(nuevo);
+        assertNotNull(creado.getId()); // H2 asigna el ID al insertar.
+        assertEquals("Ana", creado.getFirstName());
+        assertEquals("Rojas", creado.getLastName());
+        entityManager.flush();
+        entityManager.clear(); // Obliga a consultar la fila guardada en lugar del objeto en memoria.
+        Owner guardado = ownerService.findById(creado.getId());
+        assertEquals(creado, guardado); // Owner compara sus campos mediante @Data.
+    }
+
+    @Test
+    @Transactional
+    public void testUpdateOwner() throws OwnerNotFoundException {
+        Owner original = ownerService.create(new Owner("Ana", "Rojas", "Calle Uno 10", "Lima", "987654321"));
+        Integer id = original.getId();
+        entityManager.flush();
+        entityManager.clear(); // Separa la entidad de H2 para que el cambio requiera llamar a update.
+        original.setCity("Cusco");
+        original.setTelephone("912345678");
+
+        Owner actualizado = ownerService.update(original);
+
+        assertEquals(id, actualizado.getId());
+        entityManager.flush();
+        entityManager.clear();
+        Owner guardado = ownerService.findById(id);
+        assertEquals("Cusco", guardado.getCity());
+        assertEquals("912345678", guardado.getTelephone());
+        assertEquals("Rojas", guardado.getLastName());
+    }
+
+    @Test
+    @Transactional
+    public void testDeleteOwner() throws OwnerNotFoundException {
+        Owner creado = ownerService.create(new Owner("Luis", "Vega", "Calle Dos 20", "Lima", "987654322"));
+        Integer id = creado.getId();
+        assertTrue(repository.existsById(id)); // Confirma que el dueño existe antes de eliminarlo.
+
+        ownerService.delete(id);
+
+        verify(repository).delete(creado);
+        entityManager.flush();
+        entityManager.clear();
+        assertFalse(repository.existsById(id)); // Comprueba la eliminación en H2 por el mismo ID.
+    }
 
     // Integrante B — Búsquedas y consultas
     // Prueba 1: testFindOwnerById — buscar dueño existente
