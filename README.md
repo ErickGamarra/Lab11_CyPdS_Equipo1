@@ -9,7 +9,7 @@ mvn test -Dspring.profiles.active=h2
 ## Caso 1 · Pruebas unitarias de veterinarios
 
 **Integrante A:** Jose Contreras Cabrera (identidad configurada en Git).
-Rama: `feature/pruebas-crud-veterinarios`.
+Rama: `Lab11-IntreganteA-Contreras`.
 
 | Prueba de VetServiceTest | Qué comprueba |
 | --- | --- |
